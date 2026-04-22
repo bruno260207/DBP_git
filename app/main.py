@@ -88,41 +88,12 @@ def listar_estaciones(db: Session = Depends(get_db)):
     responses={404: {"description": "Estación no encontrada"}}
 )
 def historial(id: int, db: Session = Depends(get_db)):
-
-    estacion = db.query(models.EstacionDB).filter(
-        models.EstacionDB.id == id
-    ).first()
+    estacion = crud.get_estacion(db, id)
 
     if not estacion:
         raise HTTPException(status_code=404, detail="Estación no encontrada")
 
-    lecturas = db.query(models.LecturaDB).filter(
-        models.LecturaDB.estacion_id == id
-    ).all()
-
-    if not lecturas:
-        return {
-            "estacion_id": id,
-            "lecturas": [],
-            "conteo": 0,
-            "promedio": 0
-        }
-
-    valores = [l.valor for l in lecturas]
-    promedio = sum(valores) / len(valores)
-
-    return {
-        "estacion_id": id,
-        "lecturas": [
-            {
-                "valor": l.valor,
-                "estacion_id": l.estacion_id
-            }
-            for l in lecturas
-        ],
-        "conteo": len(lecturas),
-        "promedio": promedio
-    }
+    return crud.get_historial(db, id)
 
 
 #obetener riesgo
@@ -134,35 +105,12 @@ def historial(id: int, db: Session = Depends(get_db)):
     responses={404: {"description": "Estación no encontrada"}}
 )
 def obtener_riesgo(id: int, db: Session = Depends(get_db)):
-
-    estacion = db.query(models.EstacionDB).filter(
-        models.EstacionDB.id == id
-    ).first()
+    estacion = crud.get_estacion(db, id)
 
     if not estacion:
         raise HTTPException(status_code=404, detail="Estación no encontrada")
 
-    lecturas = db.query(models.LecturaDB).filter(
-        models.LecturaDB.estacion_id == id
-    ).all()
-
-    if not lecturas:
-        return {"id": id, "nivel": "SIN DATOS", "valor": 0}
-
-    ultima_lectura = lecturas[-1].valor
-
-    if ultima_lectura > 20:
-        nivel = "PELIGRO"
-    elif ultima_lectura > 10:
-        nivel = "ALERTA"
-    else:
-        nivel = "NORMAL"
-
-    return {
-        "id": id,
-        "valor": ultima_lectura,
-        "nivel": nivel
-    }
+    return crud.calcular_riesgo(db, id)
 
 
 #reporte critico
@@ -173,28 +121,7 @@ def obtener_riesgo(id: int, db: Session = Depends(get_db)):
     description="Devuelve estaciones cuya última lectura supera un umbral definido. El parámetro opcional 'umbral' permite ajustar el nivel mínimo de alerta (por defecto 20.0)."
 )
 def reporte_criticos(umbral: float = 20.0, db: Session = Depends(get_db)):
-
-    estaciones = db.query(models.EstacionDB).all()
-    resultado = []
-
-    for e in estaciones:
-        lecturas = db.query(models.LecturaDB).filter(
-            models.LecturaDB.estacion_id == e.id
-        ).all()
-
-        if lecturas:
-            ultima = lecturas[-1].valor
-            if ultima > umbral:
-                resultado.append({
-                    "estacion_id": e.id,
-                    "nombre": e.nombre,
-                    "valor": ultima
-                })
-
-    return {
-        "umbral": umbral,
-        "estaciones_criticas": resultado
-    }
+    return crud.get_estaciones_criticas(db, umbral)
 
 
 #stats
@@ -206,12 +133,4 @@ def reporte_criticos(umbral: float = 20.0, db: Session = Depends(get_db)):
 )
 def stats(db: Session = Depends(get_db)):
 
-    total_estaciones = db.query(func.count(models.EstacionDB.id)).scalar()
-    total_lecturas = db.query(func.count(models.LecturaDB.id)).scalar()
-    max_valor = db.query(func.max(models.LecturaDB.valor)).scalar()
-
-    return {
-        "total_estaciones": total_estaciones,
-        "total_lecturas": total_lecturas,
-        "max_valor": max_valor
-    }
+    return crud.obtener_estadisticas(db)
