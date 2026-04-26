@@ -37,10 +37,21 @@ def get_historial(db, estacion_id):
     promedio = sum(valores) / len(valores)
 
     return {
-        "lecturas": lecturas,
+        "lecturas": [
+            {
+                "valor": l.valor,
+                "estacion_id": l.estacion_id
+            }
+            for l in lecturas
+        ],
         "conteo": len(lecturas),
         "promedio": promedio
     }
+
+def get_estacion(db, estacion_id):
+    return db.query(models.EstacionDB)\
+        .filter(models.EstacionDB.id == estacion_id)\
+        .first()
 
 def calcular_riesgo(db, estacion_id):
     ultima = db.query(models.LecturaDB)\

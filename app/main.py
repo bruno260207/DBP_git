@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app import models, schemas, crud
 from app.database import engine, get_db
 from sqlalchemy import func
+from app.auth import crear_token_acceso, obtener_identidad_actual  
 
 # Crear tablas en la DB
 models.Base.metadata.create_all(bind=engine)
@@ -45,15 +46,13 @@ app.add_middleware(
 # =========================
 
 # Crear estación
-@app.post(
-    "/estaciones/",
-    status_code=201,
-    tags=["Gestión de Infraestructura"],
-    summary="Registrar una nueva estación de monitoreo",
-    description="Inserta una estación física (ej. río, volcán, zona sísmica) en la base de datos relacional."
-    )
-def crear_estacion(estacion: schemas.EstacionCreate, db: Session = Depends(get_db)):
-    return crud.crear_estacion(db, estacion)
+@app.post("/estaciones/", status_code=201, tags=["Infraestructura"])
+def crear_estacion(
+    estacion: schemas.EstacionCreate,
+    db: Session = Depends(get_db),
+    usuario: str = Depends(obtener_identidad_actual) # PROTECCIÓN JWT
+):
+    return crud.crear_estacion(db=db, estacion=estacion)
 
 
 # Registrar lectura
@@ -62,9 +61,23 @@ def crear_estacion(estacion: schemas.EstacionCreate, db: Session = Depends(get_d
     status_code=201,
     tags=["Telemetría de Sensores"],
     summary="Recibir datos de telemetría",
-    description="Recibe el valor capturado por un sensor y lo vincula a una estación existente mediante su ID."
-    )
-def registrar_lectura(lectura: schemas.LecturaCreate, db: Session = Depends(get_db)):
+    description="Recibe datos de sensores y valida integridad."
+)
+def registrar_lectura(
+    lectura: schemas.LecturaCreate,
+    db: Session = Depends(get_db),
+    usuario: str = Depends(obtener_identidad_actual)  # 🔐 JWT
+):
+    estacion_db = db.query(models.EstacionDB).filter(
+        models.EstacionDB.id == lectura.estacion_id
+    ).first()
+
+    if not estacion_db:
+        raise HTTPException(
+            status_code=404,
+            detail="Error de Integridad: La estación no existe en la base de datos."
+        )
+
     return crud.crear_lectura(db, lectura)
 
 
@@ -96,7 +109,7 @@ def historial(id: int, db: Session = Depends(get_db)):
     return crud.get_historial(db, id)
 
 
-#obetener riesgo
+#obtener riesgo
 @app.get(
     "/estaciones/{id}/riesgo",
     tags=["Análisis de Riesgo"],
@@ -134,3 +147,10 @@ def reporte_criticos(umbral: float = 20.0, db: Session = Depends(get_db)):
 def stats(db: Session = Depends(get_db)):
 
     return crud.obtener_estadisticas(db)
+
+
+# Endpoint para obtener el Token (Simulación de Login)
+@app.post("/token", tags=["Seguridad"])
+async def login_para_obtener_token():
+# En la Unidad II esto validará contra la tabla de usuarios
+    return {"access_token": crear_token_acceso({"sub": "admin_smat"}), "token_type": "bearer"}
