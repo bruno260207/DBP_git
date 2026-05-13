@@ -3,6 +3,7 @@ import '../services/api_service.dart';
 import '../services/auth_service.dart';
 import 'login_screen.dart';
 import '../models/estacion.dart';
+import 'add_estacion.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -74,6 +75,24 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text('Estaciones SMAT'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () async {
+
+              final resultado = await Navigator.push(
+                context,
+                  MaterialPageRoute(
+                    builder: (context) => AddEstacionScreen(),
+                  ),
+              );
+
+              if (resultado == true) {
+                setState(() {
+                  futureEstaciones = apiService.fetchEstaciones();
+              });
+              }
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
