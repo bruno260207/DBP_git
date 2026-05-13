@@ -112,3 +112,21 @@ def obtener_estadisticas(db):
             "valor": max_lectura.valor if max_lectura else 0
         }
     }
+
+def eliminar_estacion(db, estacion_id):
+    estacion = db.query(models.EstacionDB).filter(models.EstacionDB.id == estacion_id).first()
+    if not estacion:
+        return None
+    db.delete(estacion)
+    db.commit()
+    return True
+
+def editar_estacion(db, estacion_id, datos):
+    estacion = db.query(models.EstacionDB).filter(models.EstacionDB.id == estacion_id).first()
+    if not estacion:
+        return None
+    estacion.nombre = datos.nombre
+    estacion.ubicacion = datos.ubicacion
+    db.commit()
+    db.refresh(estacion)
+    return estacion

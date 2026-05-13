@@ -8,16 +8,21 @@ class ApiService {
   final String baseUrl = "http://localhost:8000";
 
   Future<List<Estacion>> fetchEstaciones() async {
-    final response = await http.get(Uri.parse('$baseUrl/estaciones/'));
-
-    if (response.statusCode == 200) {
-      List jsonResponse = json.decode(response.body);
-      return jsonResponse.map((data) => Estacion.fromJson(data)).toList();
-    
-    } else {
-      throw Exception('Error al conectar con el servidor SMAT');
+    try {
+      final response = await http.get(Uri.parse('$baseUrl/estaciones/'))
+      .timeout(const Duration(seconds: 5)); // Evita esperas infinitas
+      if (response.statusCode == 200) {
+        List jsonResponse = json.decode(response.body);
+        return jsonResponse.map((data) => Estacion.fromJson(data)).toList();
+      } else {
+        throw Exception('Error del servidor: ${response.statusCode}');
+      }
+    } catch (e) {
+// Esto evita que la App se cierre inesperadamente
+      throw Exception('No se pudo conectar con SMAT. ¿Está el servidor activo?');
     }
   }
+
   Future<bool> crearEstacion(String nombre, String ubicacion) async {
   final token = await AuthService().getToken();
 
@@ -34,5 +39,35 @@ class ApiService {
   );
 
   return response.statusCode == 201 || response.statusCode == 200;
+}
+
+Future<bool> eliminarEstacion(int id) async {
+  final token = await AuthService().getToken();
+  final response = await http.delete(
+    Uri.parse('$baseUrl/estaciones/$id'),
+    headers: {'Authorization': 'Bearer $token'},
+  );
+  return response.statusCode == 200;
+}
+
+Future<bool> editarEstacion(int id, String nombre, String ubicacion) async {
+  final token = await AuthService().getToken();
+  final response = await http.put(
+    Uri.parse('$baseUrl/estaciones/$id'),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    },
+    body: jsonEncode({'nombre': nombre, 'ubicacion': ubicacion}),
+  );
+  return response.statusCode == 200;
+}
+
+Future<Map<String, dynamic>> getRiesgo(int id) async {
+  final response = await http.get(Uri.parse('$baseUrl/estaciones/$id/riesgo'));
+  if (response.statusCode == 200) {
+    return jsonDecode(response.body);
+  }
+  return {"nivel": "SIN DATOS", "valor": 0};
 }
 }

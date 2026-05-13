@@ -154,3 +154,31 @@ def stats(db: Session = Depends(get_db)):
 async def login_para_obtener_token():
 # En la Unidad II esto validará contra la tabla de usuarios
     return {"access_token": crear_token_acceso({"sub": "admin_smat"}), "token_type": "bearer"}
+
+
+#borrar estacion
+@app.delete("/estaciones/{id}", tags=["Infraestructura"])
+def eliminar_estacion(
+    id: int,
+    db: Session = Depends(get_db),
+    usuario: str = Depends(obtener_identidad_actual)
+):
+    estacion = crud.get_estacion(db, id)
+    if not estacion:
+        raise HTTPException(status_code=404, detail="Estación no encontrada")
+    crud.eliminar_estacion(db, id)
+    return {"mensaje": "Estación eliminada correctamente"}
+
+
+#actualizar estacion
+@app.put("/estaciones/{id}", tags=["Infraestructura"])
+def editar_estacion(
+    id: int,
+    datos: schemas.EstacionUpdate,
+    db: Session = Depends(get_db),
+    usuario: str = Depends(obtener_identidad_actual)
+):
+    estacion = crud.get_estacion(db, id)
+    if not estacion:
+        raise HTTPException(status_code=404, detail="Estación no encontrada")
+    return crud.editar_estacion(db, id, datos)

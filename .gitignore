@@ -5,3 +5,8 @@ smat.db
 .pytest_cache/
 .vscode/
 .env/
+build/
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/

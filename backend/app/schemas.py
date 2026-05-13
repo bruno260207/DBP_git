@@ -8,3 +8,7 @@ class EstacionCreate(BaseModel):
 class LecturaCreate(BaseModel):
     estacion_id: int
     valor: float
+
+class EstacionUpdate(BaseModel):
+    nombre: str
+    ubicacion: str
