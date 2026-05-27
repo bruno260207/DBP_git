@@ -37,15 +37,9 @@ def get_historial(db, estacion_id):
     promedio = sum(valores) / len(valores)
 
     return {
-        "lecturas": [
-            {
-                "valor": l.valor,
-                "estacion_id": l.estacion_id
-            }
-            for l in lecturas
-        ],
+        "lecturas": valores, 
         "conteo": len(lecturas),
-        "promedio": promedio
+        "promedio": round(promedio, 2)
     }
 
 def get_estacion(db, estacion_id):

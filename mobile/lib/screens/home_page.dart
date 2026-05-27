@@ -4,6 +4,7 @@ import '../services/auth_service.dart';
 import 'login_screen.dart';
 import '../models/estacion.dart';
 import 'add_estacion.dart';
+import 'historial_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -162,8 +163,19 @@ class _HomePageState extends State<HomePage> {
                           leading: Icon(Icons.satellite_alt, color: iconColor),
                           title: Text(est.nombre),
                           subtitle: Text(est.ubicacion),
-                          onTap: () => _mostrarDialogoEdicion(est),
-                        );
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => HistorialEstacionPage(estacion: est),
+                              ),
+                            );
+                          },
+                          trailing: IconButton(
+                            icon: const Icon(Icons.edit, color: Colors.blueGrey),
+                            onPressed: () => _mostrarDialogoEdicion(est),
+                          ),
+                        ); //on tap
                       },
                     ),
                   );
