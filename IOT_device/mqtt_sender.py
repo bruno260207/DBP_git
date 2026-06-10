@@ -5,7 +5,7 @@ import random
 
 BROKER = "broker.hivemq.com"
 PORT = 1883
-TOPIC = "fisi/smat/estaciones/5"
+TOPIC = "fisi/smat/estaciones/1/lecturas"
 
 client = mqtt.Client()
 client.connect(BROKER, PORT)
